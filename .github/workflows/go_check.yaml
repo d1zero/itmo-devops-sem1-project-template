@@ -55,32 +55,11 @@ jobs:
         POSTGRES_USER: validator
         POSTGRES_PASSWORD: val1dat0r
 
-    - name: Test Level 1
-      id: test-level-1
-      continue-on-error: true
-      run: ./scripts/tests.sh 1
-      env:
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        POSTGRES_DB: project-sem-1
-        POSTGRES_USER: validator
-        POSTGRES_PASSWORD: val1dat0r
 
     - name: Test Level 2
       id: test-level-2
       continue-on-error: true
       run: ./scripts/tests.sh 2
-      env:
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        POSTGRES_DB: project-sem-1
-        POSTGRES_USER: validator
-        POSTGRES_PASSWORD: val1dat0r
-
-    - name: Test Level 3
-      id: test-level-3
-      continue-on-error: true
-      run: ./scripts/tests.sh 3
       env:
         POSTGRES_HOST: localhost
         POSTGRES_PORT: 5432

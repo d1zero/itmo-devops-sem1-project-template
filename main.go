@@ -38,7 +38,7 @@ type Response struct {
 
 func main() {
 	queryBuilder := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
-	priceTable := "price"
+	priceTable := "prices"
 
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s pool_max_conns=%d pool_max_conn_lifetime=%s pool_max_conn_idle_time=%s",

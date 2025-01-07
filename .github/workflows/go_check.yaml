@@ -55,7 +55,6 @@ jobs:
         POSTGRES_USER: validator
         POSTGRES_PASSWORD: val1dat0r
 
-
     - name: Test Level 2
       id: test-level-2
       continue-on-error: true

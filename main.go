@@ -3,7 +3,6 @@ package main
 import (
 	"archive/tar"
 	"archive/zip"
-	"compress/gzip"
 	"context"
 	"encoding/csv"
 	"encoding/json"
@@ -264,13 +263,13 @@ func processZip(file io.ReaderAt, size int64) ([][]string, error) {
 
 // processTar обрабатывает tar-архив
 func processTar(file io.Reader) ([][]string, error) {
-	gzipReader, err := gzip.NewReader(file)
-	if err != nil {
-		return nil, fmt.Errorf("ошибка создания gzip-ридера: %w", err)
-	}
-	defer gzipReader.Close()
+	//gzipReader, err := gzip.NewReader(file)
+	//if err != nil {
+	//	return nil, fmt.Errorf("ошибка создания gzip-ридера: %w", err)
+	//}
+	//defer gzipReader.Close()
 
-	tarReader := tar.NewReader(gzipReader)
+	tarReader := tar.NewReader(file)
 
 	var allRecords [][]string
 	var res [][]string

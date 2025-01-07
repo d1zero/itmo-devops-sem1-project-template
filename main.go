@@ -23,11 +23,11 @@ import (
 )
 
 type Data struct {
-	ID           int64
-	CreationDate time.Time
-	Name         string
-	Category     string
-	Price        float64
+	ID           int64     `db:"id"`
+	CreationDate time.Time `db:"create_date"`
+	Name         string    `db:"name"`
+	Category     string    `db:"category"`
+	Price        float64   `db:"price"`
 }
 
 type Response struct {
@@ -216,7 +216,7 @@ func main() {
 			// Возвращаем ZIP клиенту
 			zipFile.Seek(0, 0)
 			w.Header().Set("Content-Type", "application/zip")
-			w.Header().Set("Content-Disposition", "attachment; filename=\"data.zip\"")
+			w.Header().Set("Content-Disposition", "attachment; filename=\"response.zip\"")
 			dataZip, err := zipFile.Stat()
 			if _, err := f.WriteTo(csvInZip); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)

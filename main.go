@@ -273,6 +273,7 @@ func processTar(file io.Reader) ([][]string, error) {
 	tarReader := tar.NewReader(gzipReader)
 
 	var allRecords [][]string
+	var res [][]string
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -291,7 +292,11 @@ func processTar(file io.Reader) ([][]string, error) {
 		}
 	}
 
-	return allRecords[2:], nil
+	for _, d := range allRecords[2:] {
+		res = append(res, strings.Split(d[0], ";"))
+	}
+
+	return res, nil
 }
 
 // readCSV читает CSV-данные из io.Reader

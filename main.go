@@ -223,7 +223,7 @@ func main() {
 		})
 	})
 
-	http.ListenAndServe(":8000", r)
+	http.ListenAndServe(":8080", r)
 }
 
 // processZip обрабатывает zip-архив

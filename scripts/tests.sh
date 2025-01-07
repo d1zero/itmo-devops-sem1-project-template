@@ -120,7 +120,6 @@ check_api_advanced() {
     # Проверка POST с TAR
     echo "Тестирование POST /api/v0/prices?type=tar"
     response=$(curl -s -F "file=@$TEST_TAR" "${API_HOST}/api/v0/prices?type=tar")
-    echo "$response"
     if [[ $response == *"total_items"* ]]; then
         echo -e "${GREEN}✓ POST запрос с TAR успешен${NC}"
     else

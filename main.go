@@ -95,12 +95,11 @@ func main() {
 				Columns("id", "name", "category", "price", "create_date")
 
 			for _, row := range rows {
-				_, err := strconv.ParseFloat(row[3], 64)
-
+				price, err := strconv.ParseFloat(row[3], 64)
 				if err != nil {
 					continue
 				}
-				insQ = insQ.Values(row[0], row[1], row[2], row[3], row[4])
+				insQ = insQ.Values(row[0], row[1], row[2], strconv.FormatFloat(price, 'f', 2, 64), row[4])
 			}
 
 			query, args, err := insQ.ToSql()

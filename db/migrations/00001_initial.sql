@@ -2,11 +2,11 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS prices
 (
-    id            INTEGER,
-    creation_date DATE,
-    name          TEXT,
-    category      TEXT,
-    price         DECIMAL
+    id          INTEGER,
+    create_date DATE,
+    name        TEXT,
+    category    TEXT,
+    price       DECIMAL
 );
 -- +goose StatementEnd
 

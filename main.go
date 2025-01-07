@@ -31,9 +31,9 @@ type Data struct {
 }
 
 type Response struct {
-	TotalItems      int     `json:"total_items"`
-	TotalCategories int     `json:"total_categories"`
-	TotalPrice      float64 `json:"total_price"`
+	TotalItems      int     `json:"total_items" db:"total_items"`
+	TotalCategories int     `json:"total_categories" db:"total_categories"`
+	TotalPrice      float64 `json:"total_price" db:"total_price"`
 }
 
 func main() {
@@ -93,16 +93,10 @@ func main() {
 			}
 
 			insQ := queryBuilder.Insert(priceTable).
-				Columns("id", "name", "category", "price", "creation_date")
+				Columns("id", "name", "category", "price", "create_date")
 
-			price := .0
-			cats := map[string]struct{}{}
 			for _, row := range rows {
 				insQ = insQ.Values(row[0], row[1], row[2], row[3], row[4])
-
-				pr, _ := strconv.ParseFloat(row[3], 8)
-				price += pr
-				cats[row[2]] = struct{}{}
 			}
 
 			query, args, err := insQ.ToSql()
@@ -116,18 +110,31 @@ func main() {
 				return
 			}
 
-			response := Response{
-				TotalItems:      len(rows) - 1,
-				TotalCategories: len(cats),
-				TotalPrice:      price,
+			// Get data from db
+			getQ := queryBuilder.
+				Select("COUNT(*) as total_items", "COUNT(DISTINCT category) as total_categories", "SUM(price) as total_price").
+				From(priceTable)
+
+			query, args, err = getQ.ToSql()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
 			}
+
+			var resp Response
+
+			if err = pgxscan.Get(r.Context(), pool, &resp, query, args...); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
+			json.NewEncoder(w).Encode(resp)
 		})
 
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			q := queryBuilder.
-				Select("id", "name", "category", "price", "creation_date").
+				Select("id", "name", "category", "price", "create_date").
 				From(priceTable)
 
 			query, args, err := q.ToSql()

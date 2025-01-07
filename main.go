@@ -87,7 +87,7 @@ func main() {
 			}
 
 			if err != nil {
-				http.Error(w, "Ошибка обработки архива", http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				log.Println("Archive processing error:", err)
 				return
 			}

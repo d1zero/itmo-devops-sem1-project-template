@@ -71,7 +71,7 @@ func main() {
 				archiveType = "zip" // Тип по умолчанию
 			}
 
-			file, fileHeader, err := r.FormFile("data")
+			file, fileHeader, err := r.FormFile("file")
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return

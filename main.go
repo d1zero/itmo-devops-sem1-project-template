@@ -3,7 +3,7 @@ package main
 import (
 	"archive/tar"
 	"archive/zip"
-	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/csv"
 	"encoding/json"
@@ -71,23 +71,19 @@ func main() {
 				archiveType = "zip" // Тип по умолчанию
 			}
 
-			buf := bytes.NewBuffer(nil)
-			if _, err := io.Copy(buf, r.Body); err != nil {
+			file, fileHeader, err := r.FormFile("data")
+			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+
 			defer r.Body.Close()
 
 			var rows [][]string
-			if archiveType == "zip" {
-				// Обработка zip-архива
-				rows, err = processZip(bytes.NewReader(buf.Bytes()), int64(buf.Len()))
-			} else if archiveType == "tar" {
-				// Обработка tar-архива
-				rows, err = processTar(bytes.NewReader(buf.Bytes()))
+			if archiveType == "tar" {
+				rows, err = processTar(file)
 			} else {
-				http.Error(w, "Неподдерживаемый тип архива", http.StatusBadRequest)
-				return
+				rows, err = processZip(file, fileHeader.Size)
 			}
 
 			if err != nil {
@@ -101,7 +97,7 @@ func main() {
 
 			price := .0
 			cats := map[string]struct{}{}
-			for _, row := range rows[1:] {
+			for _, row := range rows {
 				insQ = insQ.Values(row[0], row[1], row[2], row[3], row[4])
 
 				pr, _ := strconv.ParseFloat(row[3], 8)
@@ -250,33 +246,39 @@ func processZip(file io.ReaderAt, size int64) ([][]string, error) {
 		}
 	}
 
-	return allRecords, nil
+	return allRecords[1:], nil
 }
 
 // processTar обрабатывает tar-архив
 func processTar(file io.Reader) ([][]string, error) {
-	reader := tar.NewReader(file)
+	gzipReader, err := gzip.NewReader(file)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка создания gzip-ридера: %w", err)
+	}
+	defer gzipReader.Close()
+
+	tarReader := tar.NewReader(gzipReader)
 
 	var allRecords [][]string
 	for {
-		header, err := reader.Next()
+		header, err := tarReader.Next()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("ошибка чтения tar-записи: %w", err)
 		}
 
 		if strings.HasSuffix(header.Name, ".csv") {
-			records, err := readCSV(reader)
+			records, err := readCSV(tarReader)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("ошибка чтения CSV: %w", err)
 			}
 			allRecords = append(allRecords, records...)
 		}
 	}
 
-	return allRecords, nil
+	return allRecords[2:], nil
 }
 
 // readCSV читает CSV-данные из io.Reader

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"archive/tar"
 	"archive/zip"
 	"context"
 	"encoding/csv"
@@ -12,7 +11,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"go.uber.org/multierr"
 	"io"
 	"log"
 	"net/http"
@@ -66,11 +64,6 @@ func main() {
 
 	r.Route("/api/v0/prices", func(r chi.Router) {
 		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-			archiveType := r.URL.Query().Get("type")
-			if archiveType == "" {
-				archiveType = "zip" // Тип по умолчанию
-			}
-
 			file, fileHeader, err := r.FormFile("file")
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -79,13 +72,7 @@ func main() {
 
 			defer r.Body.Close()
 
-			var rows [][]string
-			if archiveType == "tar" {
-				rows, err = processTar(file)
-			} else {
-				rows, err = processZip(file, fileHeader.Size)
-			}
-
+			rows, err := processZip(file, fileHeader.Size)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				log.Println("Archive processing error:", err)
@@ -99,13 +86,6 @@ func main() {
 				if len(row) == 5 {
 					insQ = insQ.Values(row[0], row[1], row[2], row[3], row[4])
 				}
-			}
-			if archiveType == "tar" {
-				err = multierr.Append(err, fmt.Errorf("invalid rows: %+v", rows))
-			}
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
 			}
 
 			query, args, err := insQ.ToSql()
@@ -269,37 +249,6 @@ func processZip(file io.ReaderAt, size int64) ([][]string, error) {
 	}
 
 	return allRecords[1:], nil
-}
-
-// processTar обрабатывает tar-архив
-func processTar(file io.Reader) ([][]string, error) {
-	tarReader := tar.NewReader(file)
-
-	var allRecords [][]string
-	var res [][]string
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, fmt.Errorf("ошибка чтения tar-записи: %w", err)
-		}
-
-		if strings.HasSuffix(header.Name, ".csv") {
-			records, err := readCSV(tarReader)
-			if err != nil {
-				return nil, fmt.Errorf("ошибка чтения CSV: %w", err)
-			}
-			allRecords = append(allRecords, records...)
-		}
-	}
-
-	for _, d := range allRecords[2:] {
-		res = append(res, strings.Split(d[0], ";"))
-	}
-
-	return res, nil
 }
 
 // readCSV читает CSV-данные из io.Reader

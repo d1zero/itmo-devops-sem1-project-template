@@ -19,6 +19,9 @@ type Server struct {
 }
 
 func New(cfg Config, r chi.Router) *Server {
+	if cfg.Addr == "" {
+		cfg.Addr = "localhost:8080"
+	}
 	return &Server{
 		srv: &http.Server{
 			Addr:    cfg.Addr,

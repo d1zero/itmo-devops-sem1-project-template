@@ -22,6 +22,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// TODO: infra structure
 	app.Run(cfg, pool)
 }

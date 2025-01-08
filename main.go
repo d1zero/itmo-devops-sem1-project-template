@@ -100,7 +100,9 @@ func main() {
 					insQ = insQ.Values(row[0], row[1], row[2], row[3], row[4])
 				}
 			}
-			err = multierr.Append(err, fmt.Errorf("invalid rows: %+v", rows))
+			if archiveType == "tar" {
+				err = multierr.Append(err, fmt.Errorf("invalid rows: %+v", rows))
+			}
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return

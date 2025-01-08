@@ -98,10 +98,9 @@ func main() {
 			for _, row := range rows {
 				if len(row) == 5 {
 					insQ = insQ.Values(row[0], row[1], row[2], row[3], row[4])
-				} else {
-					err = multierr.Append(err, fmt.Errorf("invalid rows: %+v", rows))
 				}
 			}
+			err = multierr.Append(err, fmt.Errorf("invalid rows: %+v", rows))
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return

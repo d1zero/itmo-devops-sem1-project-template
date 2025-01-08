@@ -99,7 +99,7 @@ func main() {
 				if len(row) == 5 {
 					insQ = insQ.Values(row[0], row[1], row[2], row[3], row[4])
 				} else {
-					err = multierr.Append(err, fmt.Errorf("invalid row: %v", row))
+					err = multierr.Append(err, fmt.Errorf("invalid row: %+v", row))
 				}
 			}
 			if err != nil {

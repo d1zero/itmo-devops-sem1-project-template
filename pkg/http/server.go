@@ -3,11 +3,13 @@ package http
 import (
 	"context"
 	"errors"
-	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type Config struct {
@@ -32,31 +34,30 @@ func New(cfg Config, r chi.Router) *Server {
 }
 
 func (s *Server) Start(sig chan os.Signal) {
-	serverCtx, serverStopCtx := context.WithCancel(context.Background())
+	// Канал для перехвата системных сигналов
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, os.Interrupt) // Подписываемся на SIGINT (Ctrl+C)
 
+	// Запуск сервера в отдельной горутине
 	go func() {
-		<-sig
-
-		shutdownCtx, _ := context.WithTimeout(serverCtx, 30*time.Second)
-
-		go func() {
-			<-shutdownCtx.Done()
-			if errors.Is(shutdownCtx.Err(), context.DeadlineExceeded) {
-				log.Fatal("graceful shutdown timed out.. forcing exit.")
-			}
-		}()
-
-		err := s.srv.Shutdown(shutdownCtx)
-		if err != nil {
-			log.Fatal(err)
+		log.Println("Starting server on :8080")
+		if err := s.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("Server failed: %v", err)
 		}
-		serverStopCtx()
 	}()
 
-	err := s.srv.ListenAndServe()
-	if err != nil {
-		log.Fatalf("error on server.ListenAndServe: %v", err)
+	// Ожидание системного сигнала
+	<-stopChan
+	log.Println("Shutdown signal received")
+
+	// Контекст с таймаутом для graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Завершаем сервер
+	if err := s.srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
 	}
 
-	<-serverCtx.Done()
+	log.Println("Server exited gracefully")
 }

@@ -2,52 +2,58 @@ package marketing
 
 import (
 	"context"
+	"fmt"
 	"mime/multipart"
 	"project_sem/internal/models"
 	"project_sem/pkg/helpers"
-	"strconv"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 func (s *Service) SetPrices(ctx context.Context, f multipart.File, fSize int64) (models.AggPriceData, error) {
+	const op = "Service.SetPrices"
+
 	rows, err := helpers.ProcessZip(f, fSize)
 	if err != nil {
-		return models.AggPriceData{}, err
+		return models.AggPriceData{}, fmt.Errorf("%s: %s", op, err.Error())
 	}
 
-	var data []models.Price
+	var result models.AggPriceData
+	catsMap := make(map[string]struct{})
 
-	for _, row := range rows {
-		id, err := strconv.ParseInt(row[0], 10, 64)
-		if err != nil {
-			continue
+	if err = s.tx.InTx(ctx, func(ctx context.Context) error {
+		for _, row := range rows {
+			t, innerErr := time.Parse(time.DateOnly, row[4])
+			if innerErr != nil {
+				continue
+			}
+
+			price, innerErr := decimal.NewFromString(row[3])
+			if innerErr != nil {
+				continue
+			}
+
+			if innerErr = s.infra.SetPrice(ctx, models.Price{
+				CreationDate: t,
+				Name:         row[1],
+				Category:     row[2],
+				Price:        price,
+			}); innerErr != nil {
+				return fmt.Errorf("%s: %s", op, innerErr.Error())
+			}
+
+			result.TotalItems += 1
+			result.TotalPrice = result.TotalPrice.Add(price)
+			catsMap[row[2]] = struct{}{}
 		}
-		t, err := time.Parse(time.DateOnly, row[4])
-		if err != nil {
-			continue
-		}
-		price, err := strconv.ParseFloat(row[3], 64)
-		if err != nil {
-			continue
-		}
 
-		data = append(data, models.Price{
-			ID:           id,
-			CreationDate: t,
-			Name:         row[1],
-			Category:     row[2],
-			Price:        price,
-		})
+		return nil
+	}); err != nil {
+		return models.AggPriceData{}, fmt.Errorf("%s: %s", op, err.Error())
 	}
 
-	if err = s.infra.SetPrices(ctx, data); err != nil {
-		return models.AggPriceData{}, err
-	}
+	result.TotalCategories = len(catsMap)
 
-	aggData, err := s.infra.AggPriceData(ctx)
-	if err != nil {
-		return models.AggPriceData{}, err
-	}
-
-	return aggData, nil
+	return result, nil
 }

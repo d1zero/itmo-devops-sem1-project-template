@@ -1,20 +1,17 @@
 package marketing
 
 import (
-	"github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"project_sem/pkg/db"
 )
 
 const priceTable = "prices"
 
 type Infra struct {
-	db *pgxpool.Pool
-	qb squirrel.StatementBuilderType
+	db *db.DB
 }
 
-func New(pool *pgxpool.Pool) *Infra {
+func New(db *db.DB) *Infra {
 	return &Infra{
-		db: pool,
-		qb: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		db: db,
 	}
 }

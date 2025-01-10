@@ -2,24 +2,21 @@ package marketing
 
 import (
 	"context"
-	"github.com/georgysavva/scany/v2/pgxscan"
+	"fmt"
 	"project_sem/internal/models"
 )
 
 func (i *Infra) Prices(ctx context.Context) ([]models.Price, error) {
-	q := i.qb.
+	const op = "Infra.Prices"
+
+	q := i.db.Builder().
 		Select("id", "create_date", "name", "category", "price").
 		From(priceTable)
 
-	query, args, err := q.ToSql()
-	if err != nil {
-		return nil, err
-	}
-
 	var result []models.Price
 
-	if err = pgxscan.Select(ctx, i.db, &result, query, args...); err != nil {
-		return nil, err
+	if err := i.db.Select(ctx, &result, q); err != nil {
+		return nil, fmt.Errorf("%s: %s", op, err.Error())
 	}
 
 	return result, nil

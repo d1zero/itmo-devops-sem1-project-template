@@ -13,14 +13,16 @@ func main() {
 
 	cfg := config.New()
 
-	pool, err := db.NewPool(ctx, cfg.Db)
+	db, err := db.New(ctx, cfg.Db)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err = pool.Ping(ctx); err != nil {
+	defer db.Close()
+
+	if err = db.Ping(ctx); err != nil {
 		log.Fatal(err)
 	}
 
-	app.Run(cfg, pool)
+	app.Run(cfg, db)
 }

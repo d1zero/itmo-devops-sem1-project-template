@@ -1,0 +1,14 @@
+linters:
+  disable-all: true
+  enable:
+    - goimports
+    - errcheck
+    - gosimple
+    - govet
+    - staticcheck
+    - unused
+
+run:
+  go: '1.23.0'
+  concurrency: 2
+  tests: true

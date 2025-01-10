@@ -1,0 +1,12 @@
+version: '3'
+
+tasks:
+  # example: task lint
+  lint:
+    cmds:
+      - golangci-lint run --config ./.golangci.yml
+
+  run:
+    cmds:
+      - docker compose build
+      - docker compose up -d

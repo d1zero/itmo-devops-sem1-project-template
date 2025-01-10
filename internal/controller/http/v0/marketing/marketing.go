@@ -2,15 +2,16 @@ package marketing
 
 import (
 	"context"
-	"github.com/go-chi/chi/v5"
 	"mime/multipart"
-	"net/http"
 	"os"
+
+	"github.com/go-chi/chi/v5"
+
 	"project_sem/internal/models"
 )
 
 type IMarketingService interface {
-	Prices(context.Context, http.ResponseWriter) (*os.File, error)
+	Prices(context.Context) (*os.File, int64, error)
 	SetPrices(context.Context, multipart.File, int64) (models.AggPriceData, error)
 }
 

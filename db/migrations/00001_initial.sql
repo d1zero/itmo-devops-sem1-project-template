@@ -2,8 +2,8 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS prices
 (
-    id          INTEGER,
-    create_date DATE,
+    id          BIGSERIAL PRIMARY KEY,
+    create_date TIMESTAMP,
     name        TEXT,
     category    TEXT,
     price       DECIMAL

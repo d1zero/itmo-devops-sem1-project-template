@@ -1,23 +1,25 @@
 package app
 
 import (
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"os"
 	"os/signal"
+	"project_sem/pkg/db"
+	"syscall"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+
 	"project_sem/internal/config"
 	marketingControllerV0 "project_sem/internal/controller/http/v0/marketing"
 	marketingInfrastructure "project_sem/internal/infrastructure/marketing"
 	marketingUc "project_sem/internal/service/marketing"
 	"project_sem/pkg/http"
-	"syscall"
 )
 
-func Run(cfg *config.Config, pool *pgxpool.Pool) {
-	marketingInfra := marketingInfrastructure.New(pool)
+func Run(cfg *config.Config, db *db.DB) {
+	marketingInfra := marketingInfrastructure.New(db)
 
-	marketingService := marketingUc.New(marketingInfra)
+	marketingService := marketingUc.New(marketingInfra, db)
 
 	marketingController := marketingControllerV0.New(marketingService)
 
